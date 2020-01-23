@@ -1,8 +1,6 @@
 <template>
-  <div class="review col-1-of-3">
-    <!-- <div class="review col-1-of-3" :class="selectedCardClass"> -->
-    <button @click="handleReviewClick">
-      <!-- <button @click="handleCardClick(review)"> -->
+  <div :class="selectedCardClass" class="review col-1-of-3">
+    <button @click="onReviewClick">
       <h3 class="review__place">{{review.place}}</h3>
       <div class="stars" :data-stars="review.rating">
         <svg
@@ -20,8 +18,10 @@
         </svg>
       </div>
     </button>
-
-    <p>{{ review.content | truncateText }}</p>
+    <p>
+      {{truncateText}}
+      <button v-if="!selectedCardClass" @click="onReviewClick">...Read more</button>
+    </p>
     <span class="review__author" v-html="review.author"></span>
     <span class="review__date">{{ review.published_at | moment }}</span>
   </div>
@@ -34,23 +34,33 @@ export default {
   name: "Review",
   props: {
     review: Object,
-    selectedReviewClass: [String, null],
-    selectedReviewId: [String, null]
+    selectedReviewId: [String, null],
+    selectedCardClass: [String, null]
   },
-  methods: {
-    handleReviewClick() {
-      //   console.log(this.review.id);
-      this.$emit("asdf", this.review);
+  data() {
+    return {
+      textTruncated: false
+    };
+  },
+  computed: {
+    truncateText() {
+      if (!this.selectedReviewId) {
+        if (this.review.content.length > 100) {
+          let arr = this.review.content.substring(0, 100).split(" ");
+          arr.pop();
+          return arr.join(" ");
+        }
+      }
+      return this.review.content;
     }
   },
-  filters: {
-    truncateText(content) {
-      if (content.length > 100) {
-        let arr = content.substring(0, 100).split(" ");
-        arr.pop();
-        return arr.join(" ") + "...";
+  methods: {
+    onReviewClick() {
+      if (!this.selectedReviewId) {
+        this.$emit("reviewSelected", this.review);
+      } else {
+        this.$emit("reviewSelected", null);
       }
-      return content;
     }
   },
   mixins: [momentMixin]

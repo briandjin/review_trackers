@@ -1,56 +1,30 @@
 <template>
   <div class="review__container">
-    <!-- <Review
-      class="review col-1-of-3"
-      v-for="review in computedReviews"
+    <Review
+      v-for="review in selectedReview"
+      :review="review"
       :key="review.id"
-      :class="selectedCardClass"
-    ></Review>-->
-    <div
-      v-for="review in computedReviews"
-      :key="review.id"
-      :class="selectedCardClass"
-      class="review col-1-of-3"
-    >
-      <!-- <div class="review col-1-of-3" :class="selectedCardClass"> -->
-      <button @click="handleCardClick(review)">
-        <!-- <button @click="handleCardClick(review)"> -->
-        <h3 class="review__place">{{review.place}}</h3>
-        <div class="stars" :data-stars="review.rating">
-          <svg
-            v-for="(rating, i) in 5"
-            :key="i"
-            height="25"
-            width="23"
-            class="star rating"
-            :data-rating="i + 1"
-          >
-            <polygon
-              points="9.9, 1.1, 3.3, 21.78, 19.8, 8.58, 0, 8.58, 16.5, 21.78"
-              style="fill-rule:nonzero;"
-            />
-          </svg>
-        </div>
-      </button>
+      :selectedCardClass="selectedCardClass"
+      :selectedReviewId="selectedReviewId"
+      @reviewSelected="onReviewSelected"
+    ></Review>
 
-      <p v-html="truncateText(review.content) "></p>
-      <span class="review__author" v-html="review.author"></span>
-      <span class="review__date">{{ review.published_at | moment }}</span>
-    </div>
     <div v-if="selectedReviewId" class="col-3-of-3 icons">
-      <button @click="handleCardClick(null)" class="icon">
+      <button @click="onCardClick(null)" class="icon">
         <svg viewBox="0 0 512 512">
           <path
             d="M 192,130 L 260,130 C 525,132 505,335 439,448 C 434,453 425,452 424,440 C 440,320 400,255 260,258 L 192,258 L 192,323 C 191,337 175,343 166,335 L34,203 C 30,197 30,190 34,184 L166,52 C 175,44 191,50 192,64 Z"
           />
         </svg>
       </button>
-      <p>Glad you liked it!</p>
-      <div>
-        <span class="review__author">John Doe</span>
-        <span class="review__date">{{ "01/09/2019" | moment }}</span>
+      <div class="vendor-response">
+        <p>Glad you liked it!</p>
+        <div>
+          <span class="review__author">John Doe</span>
+          <span class="review__date">{{ "01/09/2019" | moment }}</span>
+        </div>
       </div>
-      <button @click="handleCardClick(null)" class="meatball-menu">
+      <button @click="onCardClick(null)" class="meatball-menu">
         <span class="meatball"></span>
         <span class="meatball"></span>
         <span class="meatball"></span>
@@ -61,8 +35,8 @@
 
 <script>
 import ReviewsData from "./reviews.json";
-// import Review from "../Review/index.vue";
-import moment from "moment";
+import Review from "../Review/index.vue";
+import { momentMixin } from "../../mixins/moment.js";
 
 export default {
   name: "ReviewsList",
@@ -74,13 +48,11 @@ export default {
       textTruncated: false
     };
   },
-  filters: {
-    moment: function(date) {
-      return moment(date).format("DD/MM/YYYY");
-    }
+  components: {
+    Review
   },
   computed: {
-    computedReviews() {
+    selectedReview() {
       if (this.selectedReviewId) {
         const filteredArr = [];
         this.ReviewsData.forEach(review => {
@@ -95,19 +67,7 @@ export default {
     }
   },
   methods: {
-    truncateText(content) {
-      console.log("content", content);
-      if (!this.selectedReviewId) {
-        if (content.length > 100) {
-          let arr = content.substring(0, 100).split(" ");
-          let popped = arr.pop();
-          console.log(arr, popped);
-          return arr.join(" ") + "<button>...Read more</button>";
-        }
-      }
-      return content;
-    },
-    handleCardClick(review) {
+    onCardClick(review) {
       if (this.selectedReviewId) {
         this.selectedReviewId = null;
         this.selectedCardClass = null;
@@ -115,14 +75,12 @@ export default {
         this.selectedReviewId = review.id;
         this.selectedCardClass = "selected";
       }
+    },
+    onReviewSelected(e) {
+      this.onCardClick(e);
     }
-    // truncateText(review) {
-    //   if (review.content.length > 100) {
-    //     return review.content.splice(0, 100);
-    //   }
-    //   return review.content;
-    // }
-  }
+  },
+  mixins: [momentMixin]
 };
 </script>
 
@@ -172,18 +130,17 @@ export default {
   }
   .icons {
     display: flex;
-    padding: 2% 7%;
-    display: flex;
-    flex-direction: column;
     background: white;
-    position: relative;
+    justify-content: space-evenly;
+    padding: 2% 0;
+  }
+
+  .vendor-response {
+    width: 86%;
   }
 
   .meatball-menu {
     display: flex;
-    position: absolute;
-    right: 3em;
-    top: 3em;
 
     .meatball {
       width: 7px;
@@ -200,9 +157,6 @@ export default {
     fill: #097ae6;
     stroke: #097ae6;
     text-align: center;
-    position: absolute;
-    left: 3em;
-    top: 3em;
   }
 
   .icon svg {
@@ -218,10 +172,7 @@ export default {
     text-align: left;
     padding: 0;
     background: white;
-
-    &:hover {
-      cursor: pointer;
-    }
+    cursor: pointer;
   }
 
   .review__place {
